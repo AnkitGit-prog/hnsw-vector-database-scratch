@@ -46,11 +46,11 @@ async def lifespan(app: FastAPI):
             f"dim={s['exact']['dimension']} | "
             f"HNSW max_layer={s['hnsw']['max_layer']}"
         )
-    else:
-        logger.warning(
-            "No dataset found. API is running but indexes are empty. "
-            "Run: python scripts/generate_dataset.py && python scripts/build_index.py"
-        )
+    
+    # Pre-warm sentence transformer embedding model
+    logger.info("Pre-warming sentence transformer model...")
+    service.embedder.embed("warmup query")
+    logger.info("Sentence transformer model pre-warmed & ready for instant queries!")
 
     yield
 
@@ -71,7 +71,14 @@ app = FastAPI(
 # Allow the React frontend to call the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "*"],
+    allow_origins=[
+        "http://localhost:5180",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5180",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

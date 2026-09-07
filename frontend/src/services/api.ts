@@ -13,6 +13,9 @@ api.interceptors.response.use(
     if (detail) {
       return Promise.reject(new Error(typeof detail === 'string' ? detail : JSON.stringify(detail)));
     }
+    if (err.code === 'ERR_NETWORK' || !err.response) {
+      return Promise.reject(new Error('Network Error: Cannot connect to API server at http://localhost:8000. Ensure python server is running.'));
+    }
     return Promise.reject(err);
   }
 );
