@@ -15,15 +15,21 @@ const CHART_COLORS = {
   orange: '#f97316',
 };
 
-const CustomTooltip = ({ active, payload, label }: unknown) => {
-  if ((active as boolean) && (payload as unknown[])?.length) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ color: string; name: string; value: number }>;
+  label?: string | number;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (active && payload && payload.length) {
     return (
       <div style={{
         background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 8, padding: '10px 14px', fontSize: '0.8rem'
       }}>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 4 }}>ef_search = {label as string}</p>
-        {(payload as Array<{color: string; name: string; value: number}>).map((p, i) => (
+        <p style={{ color: 'var(--text-muted)', marginBottom: 4 }}>ef_search = {label}</p>
+        {payload.map((p, i) => (
           <p key={i} style={{ color: p.color }}>
             {p.name}: <strong>{typeof p.value === 'number' ? p.value.toFixed(4) : p.value}</strong>
           </p>
