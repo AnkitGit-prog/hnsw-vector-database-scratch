@@ -1,14 +1,60 @@
-// App.tsx — Root component with sidebar navigation
-import { useState } from 'react';
+import React, { useState, Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import {
   Search, Database, BarChart3, GitCompare, PlusCircle,
-  Cpu, Layers, Activity
+  Layers, Activity
 } from 'lucide-react';
 import SemanticSearch from './pages/SemanticSearch';
 import IndexOverview from './pages/IndexOverview';
 import BenchmarkDashboard from './pages/BenchmarkDashboard';
 import ComparisonView from './pages/ComparisonView';
 import InsertDelete from './pages/InsertDelete';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false,
+    error: null,
+  };
+
+  public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, color: 'var(--text-primary)' }}>
+          <div className="alert alert-error" style={{ marginBottom: 16 }}>
+            <h4 style={{ margin: 0, fontSize: '1rem' }}>Component Render Error</h4>
+            <p style={{ marginTop: 8, fontSize: '0.85rem' }}>
+              {this.state.error?.message || 'An unexpected UI rendering error occurred.'}
+            </p>
+          </div>
+          <button
+            className="btn btn-primary"
+            onClick={() => this.setState({ hasError: false, error: null })}
+          >
+            Reset View
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 type Page = 'search' | 'overview' | 'benchmark' | 'compare' | 'manage';
 
@@ -76,7 +122,9 @@ export default function App() {
 
       {/* Main content */}
       <main className="main-content">
-        {renderPage()}
+        <ErrorBoundary key={page}>
+          {renderPage()}
+        </ErrorBoundary>
       </main>
     </div>
   );

@@ -12,29 +12,33 @@ const EXAMPLE_QUERIES = [
 ];
 
 function SimilarityBar({ value }: { value: number }) {
-  const pct = Math.max(0, Math.min(1, value)) * 100;
+  const val = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const pct = Math.max(0, Math.min(1, val)) * 100;
   return (
     <div className="sim-bar-wrap">
       <div className="sim-bar-bg">
         <div className="sim-bar-fill" style={{ width: `${pct}%` }} />
       </div>
-      <span className="sim-value">{value.toFixed(4)}</span>
+      <span className="sim-value">{val.toFixed(4)}</span>
     </div>
   );
 }
 
 function ResultCard({ result, rank }: { result: SearchResult; rank: number }) {
-  const meta = result.metadata as Record<string, string>;
+  const meta = (result?.metadata || {}) as Record<string, unknown>;
+  const text = typeof meta.text === 'string' ? meta.text : String(meta.text || '[no text]');
+  const category = typeof meta.category === 'string' ? meta.category : null;
+  const source = typeof meta.source === 'string' ? meta.source : null;
   return (
     <div className="result-card fade-in">
       <div className="result-rank">
         <span>#{rank}</span>
-        {meta.category && <span className="badge badge-purple">{meta.category}</span>}
-        {meta.source && <span className="badge badge-cyan">{meta.source}</span>}
-        <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: '0.65rem', color: 'var(--text-muted)' }}>{result.id}</span>
+        {category && <span className="badge badge-purple">{category}</span>}
+        {source && <span className="badge badge-cyan">{source}</span>}
+        <span style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: '0.65rem', color: 'var(--text-muted)' }}>{result?.id || `res_${rank}`}</span>
       </div>
-      <div className="result-text">{meta.text || '[no text]'}</div>
-      <SimilarityBar value={result.similarity} />
+      <div className="result-text">{text}</div>
+      <SimilarityBar value={result?.similarity} />
     </div>
   );
 }
@@ -50,14 +54,15 @@ export default function SemanticSearch() {
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  const handleSearch = async (overrideQuery?: string) => {
+    const q = (overrideQuery ?? query).trim();
+    if (!q) return;
     setLoading(true);
     setError('');
     try {
       const res = mode === 'hnsw'
-        ? await searchHNSW(query, topK, efSearch)
-        : await searchExact(query, topK);
+        ? await searchHNSW(q, topK, efSearch)
+        : await searchExact(q, topK);
       setResults(res.results);
       setLatency(res.latency_ms);
     } catch (e: unknown) {
@@ -71,6 +76,7 @@ export default function SemanticSearch() {
   const handleExample = (q: string) => {
     setQuery(q);
     inputRef.current?.focus();
+    handleSearch(q);
   };
 
   return (
