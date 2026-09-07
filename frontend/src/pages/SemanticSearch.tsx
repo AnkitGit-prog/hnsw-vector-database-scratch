@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Clock } from 'lucide-react';
 import { searchExact, searchHNSW } from '../services/api';
 import type { SearchResult } from '../services/api';
 
